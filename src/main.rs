@@ -46,8 +46,8 @@ fn main() -> Result<()> {
             mic_distance,
         )
     } else {
-        println!("Речи нет, отправляем угол 0.0");
-        0.0
+        println!("Речи нет, завершаем без ответа");
+        return Ok(());
     };
 
     let angle_data = AngleData { angle };
