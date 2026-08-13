@@ -1,46 +1,40 @@
 mod config;
 mod dto;
+mod services;
 mod utils;
 
 use crate::config::config::Config;
 use crate::dto::request::audio::AudioData;
 use crate::dto::response::angle::AngleData;
-use anyhow::{Context, Result};
-use std::net::UdpSocket;
+use crate::services::socket::SocketService;
+use anyhow::Result;
 
 fn main() -> Result<()> {
-    let cfg = Config::load().context("Ошибка загрузки конфига")?;
+    let cfg = Config::load()?;
+    let server = SocketService::bind(cfg.addr())?;
+    println!("Сервер слушает на {}", cfg.addr());
 
-    let server_socket = UdpSocket::bind(cfg.addr())?;
-    println!("Сервер слушает на порту 8080");
+    let client = SocketService::bind("127.0.0.1:0")?;
 
     let mut buf = cfg.buf();
-
-    let client_socket = UdpSocket::bind("127.0.0.1:0")?;
+    let addr = cfg.addr().parse()?;
 
     let audio = AudioData {
         mic1: vec![1, 2, 3, 4],
         mic2: vec![5, 6, 7, 8],
     };
 
-    let audio_bytes = bincode::serialize(&audio).unwrap();
-    client_socket.send_to(&audio_bytes, cfg.addr())?;
-    println!("Клиент отправил AudioData: {:?} байт", audio_bytes.len());
+    client.send_to(&audio, addr)?;
+    println!("Клиент отправил AudioData: {:?}", audio);
 
-    let (len, src_addr) = server_socket.recv_from(&mut buf)?;
-    let received_data = &buf[..len];
-
-    let received_audio: AudioData = bincode::deserialize(received_data).unwrap();
+    let (received_audio, src_addr) = server.recv_from::<AudioData>(&mut buf)?;
     println!("Сервер получил AudioData: {:?}", received_audio);
 
     let angle = AngleData { angle: 42.0 };
-    let angle_bytes = bincode::serialize(&angle).unwrap();
-    server_socket.send_to(&angle_bytes, src_addr)?;
-    println!("Сервер отправил AngleData: {:?} байт", angle_bytes.len());
+    server.send_to(&angle, src_addr)?;
+    println!("Сервер отправил AngleData: {:?}", angle);
 
-    let (len, _) = client_socket.recv_from(&mut buf)?;
-    let received_data = &buf[..len];
-    let received_angle: AngleData = bincode::deserialize(received_data).unwrap();
+    let (received_angle, _) = client.recv_from::<AngleData>(&mut buf)?;
     println!("Клиент получил AngleData: {:?}", received_angle);
 
     Ok(())
