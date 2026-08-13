@@ -18,7 +18,8 @@ pub fn run(cfg: &AppConfig) -> Result<()> {
 
     info!("Сервер слушает на {}", cfg.addr());
 
-    let mut recv_buf = cfg.buf();
+    let mut recv_buf = cfg.recv_buf();
+    let mut send_buf = cfg.send_buf();
 
     loop {
         let (received_audio, src_addr) = server.recv_from::<AudioData>(&mut recv_buf)?;
@@ -29,6 +30,7 @@ pub fn run(cfg: &AppConfig) -> Result<()> {
             &server,
             src_addr,
             &cfg.audio,
+            &mut send_buf,
         )?;
     }
 }
@@ -40,6 +42,7 @@ fn process_packet(
     server: &SocketService,
     src_addr: SocketAddr,
     audio_cfg: &AudioConfig,
+    buf: &mut Vec<u8>,
 ) -> Result<()> {
     info!("Сервер получил AudioData от {}", src_addr);
 
@@ -65,7 +68,7 @@ fn process_packet(
     );
 
     let angle_data = AngleData { angle };
-    server.send_to(&angle_data, src_addr)?;
+    server.send_to(&angle_data, src_addr, buf)?;
     info!("Сервер отправил AngleData: {:?}", angle_data);
     Ok(())
 }

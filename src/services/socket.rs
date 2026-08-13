@@ -14,9 +14,14 @@ impl SocketService {
         })
     }
 
-    pub fn send_to<T: Serialize>(&self, data: &T, addr: SocketAddr) -> Result<usize> {
-        let bytes = bincode::serialize(data)?;
-        Ok(self.socket.send_to(&bytes, addr)?)
+    pub fn send_to<T: Serialize>(
+        &self,
+        data: &T,
+        addr: SocketAddr,
+        buf: &mut [u8],
+    ) -> Result<usize> {
+        bincode::serialize_into(&mut *buf, data)?;
+        Ok(self.socket.send_to(buf, addr)?)
     }
 
     pub fn recv_from<T: DeserializeOwned>(&self, buf: &mut [u8]) -> Result<(T, SocketAddr)> {

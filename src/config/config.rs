@@ -30,7 +30,8 @@ pub struct VadConfig {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ServerConfig {
-    pub buffer_size: usize,
+    pub recv_buf: usize,
+    pub send_buf: usize,
     pub host: String,
     pub port: u16,
 }
@@ -53,8 +54,12 @@ impl AppConfig {
         format!("{}:{}", self.server.host, self.server.port)
     }
 
-    pub fn buf(&self) -> Vec<u8> {
-        vec![0u8; self.server.buffer_size]
+    pub fn recv_buf(&self) -> Vec<u8> {
+        vec![0u8; self.server.recv_buf]
+    }
+
+    pub fn send_buf(&self) -> Vec<u8> {
+        vec![0u8; self.server.send_buf]
     }
 
     pub fn log_level(&self) -> LevelFilter {
