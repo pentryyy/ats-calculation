@@ -13,7 +13,8 @@ pub fn run(cfg: &AppConfig) -> Result<()> {
     Builder::new().filter_level(cfg.log_level()).init();
 
     let server = SocketService::bind(&cfg.addr())?;
-    let mut vad = SpectralVAD::new(cfg.vad.clone());
+    let mut vad1 = SpectralVAD::new(cfg.vad.clone());
+    let mut vad2 = SpectralVAD::new(cfg.vad.clone());
 
     info!("Сервер слушает на {}", cfg.addr());
 
@@ -24,7 +25,8 @@ pub fn run(cfg: &AppConfig) -> Result<()> {
     loop {
         let (received_audio, src_addr) = server.recv_from::<AudioData>(&mut buf)?;
         process_packet(
-            &mut vad,
+            &mut vad1,
+            &mut vad2,
             &received_audio,
             &server,
             src_addr,
@@ -35,7 +37,8 @@ pub fn run(cfg: &AppConfig) -> Result<()> {
 }
 
 fn process_packet(
-    vad: &mut SpectralVAD,
+    vad1: &mut SpectralVAD,
+    vad2: &mut SpectralVAD,
     audio: &AudioData,
     server: &SocketService,
     src_addr: SocketAddr,
@@ -44,8 +47,10 @@ fn process_packet(
 ) -> Result<()> {
     info!("Сервер получил AudioData от {}", src_addr);
 
-    let has_speech1 = vad.detect_speech(&audio.mic1, sample_rate);
-    let has_speech2 = vad.detect_speech(&audio.mic2, sample_rate);
+    let (has_speech1, has_speech2) = rayon::join(
+        || vad1.detect_speech(&audio.mic1, sample_rate),
+        || vad2.detect_speech(&audio.mic2, sample_rate),
+    );
 
     if !(has_speech1 || has_speech2) {
         info!("Речи нет, пропускаем");
