@@ -1,4 +1,4 @@
-use crate::config::config::AppConfig;
+use crate::config::config::{AppConfig, AudioConfig};
 use crate::dto::request::audio::AudioData;
 use crate::dto::response::angle::AngleData;
 use crate::services::socket::SocketService;
@@ -18,20 +18,17 @@ pub fn run(cfg: &AppConfig) -> Result<()> {
 
     info!("Сервер слушает на {}", cfg.addr());
 
-    let sample_rate = cfg.audio.sample_rate;
-    let mic_distance = cfg.audio.mic_distance;
-    let mut buf = cfg.buf();
+    let mut recv_buf = cfg.buf();
 
     loop {
-        let (received_audio, src_addr) = server.recv_from::<AudioData>(&mut buf)?;
+        let (received_audio, src_addr) = server.recv_from::<AudioData>(&mut recv_buf)?;
         process_packet(
             &mut vad1,
             &mut vad2,
             &received_audio,
             &server,
             src_addr,
-            sample_rate,
-            mic_distance,
+            &cfg.audio,
         )?;
     }
 }
@@ -39,17 +36,16 @@ pub fn run(cfg: &AppConfig) -> Result<()> {
 fn process_packet(
     vad1: &mut SpectralVAD,
     vad2: &mut SpectralVAD,
-    audio: &AudioData,
+    audio_dto: &AudioData,
     server: &SocketService,
     src_addr: SocketAddr,
-    sample_rate: u32,
-    mic_distance: f32,
+    audio_cfg: &AudioConfig,
 ) -> Result<()> {
     info!("Сервер получил AudioData от {}", src_addr);
 
     let (has_speech1, has_speech2) = rayon::join(
-        || vad1.detect_speech(&audio.mic1, sample_rate),
-        || vad2.detect_speech(&audio.mic2, sample_rate),
+        || vad1.detect_speech(&audio_dto.mic1, audio_cfg.sample_rate),
+        || vad2.detect_speech(&audio_dto.mic2, audio_cfg.sample_rate),
     );
 
     if !(has_speech1 || has_speech2) {
@@ -61,7 +57,7 @@ fn process_packet(
         "Речь обнаружена (mic1: {}, mic2: {})",
         has_speech1, has_speech2
     );
-    let angle = calculate_angle(&audio.mic1, &audio.mic2, sample_rate, mic_distance);
+    let angle = calculate_angle(&audio_dto.mic1, &audio_dto.mic2, audio_cfg.sample_rate, audio_cfg.mic_distance);
 
     let angle_data = AngleData { angle };
     server.send_to(&angle_data, src_addr)?;
