@@ -6,31 +6,27 @@ mod utils;
 
 use crate::config::config::AppConfig;
 use crate::dto::request::audio::AudioData;
-use crate::dto::response::angle::AngleData;
 use crate::services::socket::SocketService;
-use crate::services::spectral_vad::SpectralVAD;
-use crate::utils::calculate_angle::calculate_angle;
 
-use crate::server::server::run;
 use anyhow::Result;
 use rand::Rng;
 use std::thread;
 use std::time::Duration;
+use crate::server::server::run;
 
 fn main() -> Result<()> {
     let cfg = AppConfig::load()?;
 
-    // let cfg_clone = cfg.clone();
     // thread::spawn(move || {
     //     let client = SocketService::bind("127.0.0.1:0").unwrap();
-    //     let addr = cfg_clone.addr().parse().unwrap();
+    //     let addr = cfg.addr().parse().unwrap();
     //     let mut rng = rand::thread_rng();
     //     let mut speech = rng.gen_bool(0.5);
     //     let mut remaining_time = rng.gen_range(5.0..20.0);
-    //     let packet_duration = cfg_clone.vad.fft_size as f32 / cfg_clone.audio.sample_rate as f32;
+    //     let packet_duration = cfg.vad.fft_size as f32 / cfg.audio.sample_rate as f32;
     //
     //     loop {
-    //         let audio = create_audio(&cfg_clone, speech);
+    //         let audio = create_audio(&cfg, speech);
     //         if let Err(e) = client.send_to(&audio, addr) {
     //             eprintln!("Ошибка отправки: {}", e);
     //         }
