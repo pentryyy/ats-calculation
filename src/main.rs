@@ -8,11 +8,11 @@ use crate::config::config::AppConfig;
 use crate::dto::request::audio::AudioData;
 use crate::services::socket::SocketService;
 
+use crate::server::server::run;
 use anyhow::Result;
 use rand::Rng;
 use std::thread;
 use std::time::Duration;
-use crate::server::server::run;
 
 fn main() -> Result<()> {
     let cfg = AppConfig::load()?;
