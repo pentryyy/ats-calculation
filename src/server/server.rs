@@ -5,13 +5,17 @@ use crate::services::socket::SocketService;
 use crate::services::spectral_vad::SpectralVAD;
 use crate::utils::calculate_angle::calculate_angle;
 use anyhow::Result;
+use env_logger::Builder;
+use log::info;
 use std::net::SocketAddr;
 
 pub fn run(cfg: &AppConfig) -> Result<()> {
+    Builder::new().filter_level(cfg.log_level()).init();
+
     let server = SocketService::bind(&cfg.addr())?;
     let mut vad = SpectralVAD::new(cfg.vad.clone());
 
-    println!("Сервер слушает на {}", cfg.addr());
+    info!("Сервер слушает на {}", cfg.addr());
 
     let sample_rate = cfg.audio.sample_rate;
     let mic_distance = cfg.audio.mic_distance;
@@ -38,17 +42,17 @@ fn process_packet(
     sample_rate: u32,
     mic_distance: f32,
 ) -> Result<()> {
-    println!("Сервер получил AudioData от {}", src_addr);
+    info!("Сервер получил AudioData от {}", src_addr);
 
     let has_speech1 = vad.detect_speech(&audio.mic1, sample_rate);
     let has_speech2 = vad.detect_speech(&audio.mic2, sample_rate);
 
     if !(has_speech1 || has_speech2) {
-        println!("Речи нет, пропускаем");
+        info!("Речи нет, пропускаем");
         return Ok(());
     }
 
-    println!(
+    info!(
         "Речь обнаружена (mic1: {}, mic2: {})",
         has_speech1, has_speech2
     );
@@ -56,6 +60,6 @@ fn process_packet(
 
     let angle_data = AngleData { angle };
     server.send_to(&angle_data, src_addr)?;
-    println!("Сервер отправил AngleData: {:?}", angle_data);
+    info!("Сервер отправил AngleData: {:?}", angle_data);
     Ok(())
 }

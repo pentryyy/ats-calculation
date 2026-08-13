@@ -1,3 +1,5 @@
+log_level: info
+
 audio:
   sample_rate: 16000
   mic_distance: 0.15 # В метрах

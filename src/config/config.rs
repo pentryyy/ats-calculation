@@ -1,10 +1,12 @@
 use anyhow::{Context, Result};
+use log::LevelFilter;
 use serde::{Deserialize, Serialize};
 use std::env;
 use std::fs;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct AppConfig {
+    pub log_level: String,
     pub audio: AudioConfig,
     pub vad: VadConfig,
     pub server: ServerConfig,
@@ -53,5 +55,17 @@ impl AppConfig {
 
     pub fn buf(&self) -> Vec<u8> {
         vec![0u8; self.server.buffer_size]
+    }
+
+    pub fn log_level(&self) -> LevelFilter {
+        match self.log_level.to_lowercase().as_str() {
+            "off" => LevelFilter::Off,
+            "error" => LevelFilter::Error,
+            "warn" => LevelFilter::Warn,
+            "info" => LevelFilter::Info,
+            "debug" => LevelFilter::Debug,
+            "trace" => LevelFilter::Trace,
+            _ => LevelFilter::Info,
+        }
     }
 }
