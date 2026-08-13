@@ -18,8 +18,9 @@ impl SocketService {
         &self,
         data: &T,
         addr: SocketAddr,
-        buf: &mut [u8],
+        buf: &mut Vec<u8>,
     ) -> Result<usize> {
+        buf.clear();
         bincode::serialize_into(&mut *buf, data)?;
         Ok(self.socket.send_to(buf, addr)?)
     }
