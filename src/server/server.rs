@@ -57,7 +57,12 @@ fn process_packet(
         "Речь обнаружена (mic1: {}, mic2: {})",
         has_speech1, has_speech2
     );
-    let angle = calculate_angle(&audio_dto.mic1, &audio_dto.mic2, audio_cfg.sample_rate, audio_cfg.mic_distance);
+    let angle = calculate_angle(
+        &audio_dto.mic1,
+        &audio_dto.mic2,
+        audio_cfg.sample_rate,
+        audio_cfg.mic_distance,
+    );
 
     let angle_data = AngleData { angle };
     server.send_to(&angle_data, src_addr)?;
