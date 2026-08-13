@@ -1,7 +1,6 @@
 mod config;
 mod dto;
 mod services;
-mod utils;
 
 use crate::config::config::Config;
 use crate::dto::request::audio::AudioData;
