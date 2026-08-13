@@ -4,18 +4,36 @@ use std::env;
 use std::fs;
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Config {
-    pub server: Server,
+pub struct AppConfig {
+    pub audio: AudioConfig,
+    pub vad: VadConfig,
+    pub server: ServerConfig,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-pub struct Server {
+pub struct AudioConfig {
+    pub sample_rate: u32,
+    pub mic_distance: f32,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct VadConfig {
+    pub low_freq: u32,
+    pub speech_freq_start: u32,
+    pub speech_freq_end: u32,
+    pub speech_energy_threshold: f32,
+    pub ratio_threshold: f32,
+    pub fft_size: usize,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct ServerConfig {
     pub buffer_size: usize,
     pub host: String,
     pub port: u16,
 }
 
-impl Config {
+impl AppConfig {
     pub fn load() -> Result<Self> {
         let config_path = env::var("CONFIG_PATH")
             .with_context(|| "Переменная окружения CONFIG_PATH не задана")?;
@@ -23,7 +41,7 @@ impl Config {
         let data = fs::read_to_string(&config_path)
             .with_context(|| format!("Не удалось прочитать конфиг {:?}", config_path))?;
 
-        let cfg: Config = serde_yaml::from_str(&data)
+        let cfg: AppConfig = serde_yaml::from_str(&data)
             .with_context(|| format!("Ошибка парсинга конфига {:?}", config_path))?;
 
         Ok(cfg)
