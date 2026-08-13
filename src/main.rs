@@ -1,15 +1,20 @@
+mod config;
 mod dto;
 mod utils;
 
+use crate::config::config::Config;
 use crate::dto::request::audio::AudioData;
 use crate::dto::response::angle::AngleData;
+use anyhow::{Context, Result};
 use std::net::UdpSocket;
 
-fn main() -> std::io::Result<()> {
-    let server_socket = UdpSocket::bind("127.0.0.1:8080")?;
+fn main() -> Result<()> {
+    let cfg = Config::load().context("Ошибка загрузки конфига")?;
+
+    let server_socket = UdpSocket::bind(cfg.addr())?;
     println!("Сервер слушает на порту 8080");
 
-    let mut buf = [0u8; 1024];
+    let mut buf = cfg.buf();
 
     let client_socket = UdpSocket::bind("127.0.0.1:0")?;
 
@@ -19,7 +24,7 @@ fn main() -> std::io::Result<()> {
     };
 
     let audio_bytes = bincode::serialize(&audio).unwrap();
-    client_socket.send_to(&audio_bytes, "127.0.0.1:8080")?;
+    client_socket.send_to(&audio_bytes, cfg.addr())?;
     println!("Клиент отправил AudioData: {:?} байт", audio_bytes.len());
 
     let (len, src_addr) = server_socket.recv_from(&mut buf)?;
