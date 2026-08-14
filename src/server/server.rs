@@ -12,7 +12,7 @@ use std::net::SocketAddr;
 pub fn run(cfg: &AppConfig) -> Result<()> {
     Builder::new().filter_level(cfg.log_level()).init();
 
-    let server = SocketService::bind(&cfg.addr())?;
+    let server = SocketService::bind(cfg.addr())?;
     let mut vad1 = SpectralVAD::new(cfg.vad.clone());
     let mut vad2 = SpectralVAD::new(cfg.vad.clone());
 
