@@ -1,3 +1,6 @@
+/// Скорость звука в воздухе при 20°C (м/с)
+const SPEED_OF_SOUND: f32 = 343.0;
+
 /// Вычисляет угол прихода звука (в градусах) по двум сигналам.
 ///
 /// # Аргументы
@@ -11,7 +14,7 @@ pub fn calculate_angle(mic1: &[i16], mic2: &[i16], sample_rate: u32, mic_distanc
     let signal1: Vec<f32> = mic1.iter().map(|&x| x as f32).collect();
     let signal2: Vec<f32> = mic2.iter().map(|&x| x as f32).collect();
 
-    let max_lag = (mic_distance * sample_rate as f32 / 343.0) as usize + 1;
+    let max_lag = (mic_distance * sample_rate as f32 / SPEED_OF_SOUND) as usize + 1;
     let n = signal1.len();
     let mut correlation = Vec::with_capacity(2 * max_lag + 1);
 
@@ -41,7 +44,6 @@ pub fn calculate_angle(mic1: &[i16], mic2: &[i16], sample_rate: u32, mic_distanc
     let lag_samples = max_index as isize - max_lag_isize;
 
     let tau = lag_samples as f32 / sample_rate as f32;
-    let speed_of_sound = 343.0;
-    let ratio = (tau * speed_of_sound / mic_distance).clamp(-1.0, 1.0);
+    let ratio = (tau * SPEED_OF_SOUND / mic_distance).clamp(-1.0, 1.0);
     ratio.asin().to_degrees()
 }
