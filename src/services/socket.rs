@@ -3,6 +3,15 @@ use serde::Serialize;
 use serde::de::DeserializeOwned;
 use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 
+pub trait PacketSender {
+    fn send_to<T: Serialize>(
+        &mut self,
+        data: &T,
+        addr: SocketAddr,
+        buf: &mut Vec<u8>,
+    ) -> Result<usize>;
+}
+
 pub struct SocketService {
     socket: UdpSocket,
 }
@@ -29,5 +38,16 @@ impl SocketService {
         let (len, addr) = self.socket.recv_from(buf)?;
         let data = bincode::deserialize(&buf[..len])?;
         Ok((data, addr))
+    }
+}
+
+impl PacketSender for SocketService {
+    fn send_to<T: Serialize>(
+        &mut self,
+        data: &T,
+        addr: SocketAddr,
+        buf: &mut Vec<u8>,
+    ) -> Result<usize> {
+        (&*self).send_to(data, addr, buf)
     }
 }
