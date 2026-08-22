@@ -38,10 +38,10 @@ impl SpectralVAD {
         let n = self.buffer.len();
         assert!(frame.len() >= n, "Фрейм короче FFT размера");
 
-        for i in 0..n {
+        for (i, &sample) in frame.iter().enumerate().take(n) {
             let window = HAMMING_ALPHA
                 - HAMMING_BETA * (2.0 * std::f32::consts::PI * i as f32 / (n - 1) as f32).cos();
-            self.buffer[i] = Complex::new(frame[i] as f32 * window, 0.0);
+            self.buffer[i] = Complex::new(sample as f32 * window, 0.0);
         }
 
         self.fft.process(&mut self.buffer);

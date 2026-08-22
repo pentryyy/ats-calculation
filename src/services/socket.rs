@@ -48,6 +48,6 @@ impl PacketSender for SocketService {
         addr: SocketAddr,
         buf: &mut Vec<u8>,
     ) -> Result<usize> {
-        (&*self).send_to(data, addr, buf)
+        (*self).send_to(data, addr, buf)
     }
 }

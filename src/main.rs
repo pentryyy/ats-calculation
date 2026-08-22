@@ -12,7 +12,7 @@ use anyhow::Result;
 fn main() -> Result<()> {
     let cfg = AppConfig::load()?;
 
-    if let Err(_) = run(&cfg) {
+    if run(&cfg).is_err() {
         std::process::exit(1);
     }
 
